@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>阿仁 x 排球少年TCG組牌工具</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -133,7 +134,7 @@
         
         .cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 20px;
             max-height: 600px;
             overflow-y: auto;
@@ -165,18 +166,26 @@
             opacity: 0.7;
         }
         
-        .card-image {
+        /* 卡片庫圖片容器 - 完整顯示不裁切 */
+        .card-image-container {
             width: 100%;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            background: #eee;
+            min-height: 280px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #999;
-            font-size: 0.9rem;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            background: #eee;
+            overflow: hidden;
+            padding: 10px;
+        }
+        
+        .card-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
         }
         
         .card-name {
@@ -262,7 +271,7 @@
         
         .deck-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 15px;
             flex: 1;
             overflow-y: auto;
@@ -281,13 +290,26 @@
             border: 1px solid #eee;
         }
         
-        .deck-card-image {
+        /* 牌組圖片容器 - 完整顯示不裁切 */
+        .deck-card-image-container {
             width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 6px;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 8px;
+            border-radius: 6px;
             background: #eee;
+            overflow: hidden;
+            padding: 5px;
+        }
+        
+        .deck-card-image {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
         }
         
         .deck-card-name {
@@ -386,6 +408,39 @@
             color: #e53935;
         }
         
+        .download-section {
+            margin-top: 25px;
+            text-align: center;
+        }
+        
+        .download-btn {
+            padding: 12px 24px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .download-btn:hover {
+            background: #388e3c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .download-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
         .notification {
             position: fixed;
             bottom: 20px;
@@ -427,13 +482,13 @@
             }
             
             .cards-container {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             }
         }
         
         @media (max-width: 768px) {
             .cards-container {
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
             }
             
             .stats-grid {
@@ -518,6 +573,17 @@
                             <span class="stat-value" id="stat-event">0</span>
                         </div>
                     </div>
+                </div>
+                
+                <div class="download-section">
+                    <button class="download-btn" id="download-btn" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        下載牌組圖片
+                    </button>
                 </div>
             </section>
         </div>
@@ -760,6 +826,9 @@
                     }
                 }
             });
+            
+            // 下載按鈕
+            document.getElementById('download-btn').addEventListener('click', downloadDeckImage);
         }
         
         // 渲染所有卡片
@@ -792,8 +861,8 @@
                 });
                 
                 cardElement.innerHTML = `
-                    <div class="card-image">
-                        <img src="${card.image}" alt="${card.name}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                    <div class="card-image-container">
+                        <img src="${card.image}" alt="${card.name}" class="card-image">
                     </div>
                     <div class="card-name">${card.name}</div>
                     <div class="card-type">${getTypeText(card.type)}</div>
@@ -852,6 +921,7 @@
             const deckCount = document.getElementById('deck-count');
             const totalCount = document.getElementById('total-count');
             const eventCount = document.getElementById('event-count');
+            const downloadBtn = document.getElementById('download-btn');
             
             // 計算事件卡數量
             const eventCardCount = currentDeck.filter(card => card.type === 'event').length;
@@ -860,6 +930,9 @@
             totalCount.textContent = currentDeck.length;
             eventCount.textContent = eventCardCount;
             deckCount.textContent = `${currentDeck.length}/40`;
+            
+            // 啟用或禁用下載按鈕
+            downloadBtn.disabled = currentDeck.length === 0;
             
             // 更新牌組列表
             if (currentDeck.length === 0) {
@@ -886,8 +959,8 @@
                     deckCardElement.className = 'deck-card';
                     
                     deckCardElement.innerHTML = `
-                        <div class="deck-card-image">
-                            <img src="${item.card.image}" alt="${item.card.name}" style="width:100%; height:100%; object-fit:cover; border-radius:6px;">
+                        <div class="deck-card-image-container">
+                            <img src="${item.card.image}" alt="${item.card.name}" class="deck-card-image">
                         </div>
                         <div class="deck-card-name">${item.card.name}</div>
                         <div class="deck-card-type">${getTypeText(item.card.type)}</div>
@@ -928,6 +1001,166 @@
             
             document.getElementById('stat-total').textContent = currentDeck.length;
             document.getElementById('stat-event').textContent = eventCount;
+        }
+        
+        // 下載牌組圖片
+        function downloadDeckImage() {
+            if (currentDeck.length === 0) {
+                showNotification('牌組是空的，無法下載！', 'error');
+                return;
+            }
+            
+            showNotification('正在生成圖片，請稍候...', 'success');
+            
+            // 創建用於生成圖片的臨時容器
+            const tempContainer = document.createElement('div');
+            tempContainer.style.padding = '20px';
+            tempContainer.style.background = 'white';
+            tempContainer.style.maxWidth = '1000px';
+            tempContainer.style.margin = '0 auto';
+            
+            // 添加標題
+            const title = document.createElement('h2');
+            title.textContent = '我的排球少年TCG牌組';
+            title.style.textAlign = 'center';
+            title.style.color = '#e53935';
+            title.style.marginBottom = '20px';
+            title.style.fontSize = '24px';
+            tempContainer.appendChild(title);
+            
+            // 添加卡片網格 - 使用4列布局
+            const cardsGrid = document.createElement('div');
+            cardsGrid.style.display = 'flex';
+            cardsGrid.style.flexWrap = 'wrap';
+            cardsGrid.style.gap = '15px';
+            cardsGrid.style.justifyContent = 'flex-start';
+            
+            // 按卡片ID分組
+            const groupedCards = {};
+            currentDeck.forEach(card => {
+                if (!groupedCards[card.id]) {
+                    groupedCards[card.id] = {
+                        card: card,
+                        count: 1
+                    };
+                } else {
+                    groupedCards[card.id].count++;
+                }
+            });
+            
+            // 計算每行的卡片數量（最多4個）
+            const cardsPerRow = 4;
+            let currentRow = document.createElement('div');
+            currentRow.style.display = 'flex';
+            currentRow.style.width = '100%';
+            currentRow.style.justifyContent = 'space-between';
+            currentRow.style.marginBottom = '15px';
+            
+            // 添加卡片到網格 - 每行最多4個
+            Object.values(groupedCards).forEach((item, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.style.flex = '1';
+                cardElement.style.minWidth = `calc(${100/cardsPerRow}% - 15px)`;
+                cardElement.style.maxWidth = `calc(${100/cardsPerRow}% - 15px)`;
+                cardElement.style.background = '#f9f9f9';
+                cardElement.style.borderRadius = '8px';
+                cardElement.style.padding = '10px';
+                cardElement.style.textAlign = 'center';
+                cardElement.style.border = '1px solid #eee';
+                cardElement.style.display = 'flex';
+                cardElement.style.flexDirection = 'column';
+                cardElement.style.alignItems = 'center';
+                
+                // 卡片圖片 - 完整顯示不裁切
+                const imgContainer = document.createElement('div');
+                imgContainer.style.width = '100%';
+                imgContainer.style.minHeight = '180px';
+                imgContainer.style.display = 'flex';
+                imgContainer.style.alignItems = 'center';
+                imgContainer.style.justifyContent = 'center';
+                imgContainer.style.marginBottom = '8px';
+                imgContainer.style.borderRadius = '6px';
+                imgContainer.style.background = '#eee';
+                imgContainer.style.overflow = 'hidden';
+                imgContainer.style.padding = '10px';
+                
+                const img = document.createElement('img');
+                img.src = item.card.image;
+                img.alt = item.card.name;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                img.style.width = 'auto';
+                img.style.height = 'auto';
+                img.style.objectFit = 'contain';
+                
+                imgContainer.appendChild(img);
+                
+                // 卡片名稱
+                const name = document.createElement('div');
+                name.textContent = item.card.name;
+                name.style.fontWeight = '600';
+                name.style.margin = '5px 0';
+                name.style.color = '#333';
+                name.style.fontSize = '0.9rem';
+                
+                // 卡片數量
+                const count = document.createElement('div');
+                count.textContent = `x${item.count}`;
+                count.style.fontWeight = 'bold';
+                count.style.color = '#e53935';
+                count.style.fontSize = '1rem';
+                
+                cardElement.appendChild(imgContainer);
+                cardElement.appendChild(name);
+                cardElement.appendChild(count);
+                
+                // 添加到當前行
+                currentRow.appendChild(cardElement);
+                
+                // 每4個卡片換行
+                if ((index + 1) % cardsPerRow === 0) {
+                    cardsGrid.appendChild(currentRow);
+                    currentRow = document.createElement('div');
+                    currentRow.style.display = 'flex';
+                    currentRow.style.width = '100%';
+                    currentRow.style.justifyContent = 'space-between';
+                    currentRow.style.marginBottom = '15px';
+                }
+            });
+            
+            // 添加最後一行（如果不滿4個）
+            if (currentRow.children.length > 0) {
+                cardsGrid.appendChild(currentRow);
+            }
+            
+            tempContainer.appendChild(cardsGrid);
+            
+            // 將臨時容器添加到文檔中（隱藏）
+            tempContainer.style.position = 'fixed';
+            tempContainer.style.left = '-9999px';
+            document.body.appendChild(tempContainer);
+            
+            // 使用html2canvas生成圖片
+            html2canvas(tempContainer, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                // 創建下載連結
+                const link = document.createElement('a');
+                link.download = `排球少年TCG牌組-${new Date().toISOString().slice(0, 10)}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // 移除臨時容器
+                document.body.removeChild(tempContainer);
+                
+                showNotification('牌組圖片下載完成！', 'success');
+            }).catch(error => {
+                console.error('生成圖片時出錯:', error);
+                document.body.removeChild(tempContainer);
+                showNotification('生成圖片時出錯，請重試', 'error');
+            });
         }
         
         // 顯示通知
