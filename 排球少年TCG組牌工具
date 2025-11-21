@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>排球少年TCG組牌工具</title>
+    <meta name="description" content="排球少年TCG組牌工具 - 上傳卡片圖片，點擊或拖拽添加到牌組！">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+            background-image: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #e53935, #e35d5b);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .cards-section {
+            flex: 3;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .deck-section {
+            flex: 2;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .section-title {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #e53935;
+            color: #e53935;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-title span {
+            font-size: 1rem;
+            color: #666;
+            font-weight: normal;
+        }
+        
+        .upload-area {
+            border: 2px dashed #e53935;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+            background: #fff9f9;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            background: #ffeaea;
+            border-color: #c62828;
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: #e53935;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #e53935;
+            font-weight: 600;
+        }
+        
+        .upload-hint {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .card-type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .type-btn {
+            padding: 8px 16px;
+            background: #f1f1f1;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .type-btn.active {
+            background: #e53935;
+            color: white;
+        }
+        
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+            flex: 1;
+        }
+        
+        .card {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            border-color: #e53935;
+        }
+        
+        .card.dragging {
+            opacity: 0.7;
+        }
+        
+        .card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        
+        .card-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e53935;
+            font-size: 0.95rem;
+            word-break: break-word;
+            width: 100%;
+        }
+        
+        .card-type {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+            padding: 3px 8px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .card-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .add-btn {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .remove-btn {
+            background: #f44336;
+            color: white;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .card:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        .deck-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 18px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .deck-count {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #e53935;
+        }
+        
+        .deck-types {
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        .deck-area {
+            border: 2px dashed #e53935;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 400px;
+            background: #fff9f9;
+            transition: all 0.3s;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .deck-area.drag-over {
+            background: #ffeaea;
+            border-color: #c62828;
+        }
+        
+        .deck-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .deck-card {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            border: 1px solid #eee;
+        }
+        
+        .deck-card-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            background: #eee;
+        }
+        
+        .deck-card-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.85rem;
+        }
+        
+        .deck-card-type {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .deck-card-count {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .count-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        
+        .count-number {
+            font-weight: bold;
+            color: #e53935;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .empty-deck {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+            font-style: italic;
+            font-size: 1.1rem;
+            grid-column: 1 / -1;
+        }
+        
+        .deck-stats {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stats-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #e53935;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+        
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: #666;
+        }
+        
+        .stat-value {
+            font-weight: 600;
+            color: #e53935;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #4caf50;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1001;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .warning {
+            background: #ff9800;
+        }
+        
+        .error {
+            background: #f44336;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .cards-container {
+                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .cards-container {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .deck-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .card-type-selector {
+                justify-content: center;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>排球少年TCG組牌工具</h1>
+            <p class="subtitle">上傳卡片圖片，點擊或拖拽添加到牌組！</p>
+        </header>
+        
+        <div class="main-content">
+            <section class="cards-section">
+                <h2 class="section-title">卡片庫 <span>點擊或拖拽卡片添加到牌組</span></h2>
+                
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">點擊上傳卡片圖片</div>
+                    <div class="upload-hint">支援 JPG, PNG 格式，檔案名稱將作為卡片名稱</div>
+                    <input type="file" id="file-input" accept="image/*" multiple>
+                </div>
+                
+                <div class="card-type-selector">
+                    <button class="type-btn active" data-type="all">全部</button>
+                    <button class="type-btn" data-type="karasuno">烏野高校</button>
+                    <button class="type-btn" data-type="nekoma">音駒高校</button>
+                    <button class="type-btn" data-type="aoba-johsai">青葉城西</button>
+                    <button class="type-btn" data-type="fukurodani">梟谷高校</button>
+                    <button class="type-btn" data-type="other">其他高校</button>
+                    <button class="type-btn" data-type="event">事件</button>
+                    <button class="type-btn" data-type="hvbp">HVBP</button>
+                    <button class="type-btn" data-type="hvpr">HVPR</button>
+                </div>
+                
+                <div class="cards-container" id="cards-container">
+                    <div class="empty-card-message">暫無卡片，請上傳卡片圖片</div>
+                </div>
+            </section>
+            
+            <section class="deck-section">
+                <h2 class="section-title">我的牌組 <span id="deck-count">0/40</span></h2>
+                
+                <div class="deck-info">
+                    <div class="deck-count">卡片數量: <span id="total-count">0</span>/40</div>
+                    <div class="deck-types">事件卡: <span id="event-count">0</span>/8</div>
+                </div>
+                
+                <div class="deck-area" id="deck-area">
+                    <div class="deck-list" id="deck-list">
+                        <div class="empty-deck">牌組目前是空的，請從左側添加卡片</div>
+                    </div>
+                </div>
+                
+                <div class="deck-stats">
+                    <div class="stats-title">牌組統計</div>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">總卡片數:</span>
+                            <span class="stat-value" id="stat-total">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">事件卡:</span>
+                            <span class="stat-value" id="stat-event">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <p>排球少年TCG組牌工具 &copy; 2023 - 輕鬆構建您的專屬牌組</p>
+        </footer>
+    </div>
+    
+    <!-- 通知 -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // 卡片數據
+        let allCards = [];
+        let currentDeck = [];
+        let currentCardType = 'all';
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+        
+        // 設置事件監聽器
+        function setupEventListeners() {
+            // 上傳區域點擊
+            document.getElementById('upload-area').addEventListener('click', function() {
+                document.getElementById('file-input').click();
+            });
+            
+            // 檔案上傳
+            document.getElementById('file-input').addEventListener('change', handleFileUpload);
+            
+            // 卡片類型篩選
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCardType = this.dataset.type;
+                    renderAllCards();
+                });
+            });
+            
+            // 牌組區域拖拽事件
+            const deckArea = document.getElementById('deck-area');
+            deckArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+            
+            deckArea.addEventListener('dragleave', function() {
+                this.classList.remove('drag-over');
+            });
+            
+            deckArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+                
+                const cardId = e.dataTransfer.getData('text/plain');
+                if (cardId) {
+                    const card = allCards.find(c => c.id == cardId);
+                    if (card) {
+                        addToDeck(card);
+                    }
+                }
+            });
+        }
+        
+        // 處理檔案上傳
+        function handleFileUpload(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.match('image.*')) continue;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 從檔案名稱推測卡片類型，如果當前有選中分類則使用該分類
+                    const fileName = file.name.replace(/\.[^/.]+$/, ""); // 移除副檔名
+                    let type = currentCardType !== 'all' ? currentCardType : 'other';
+                    
+                    // 如果當前是"全部"分類，則嘗試從檔案名稱識別
+                    if (currentCardType === 'all') {
+                        if (fileName.includes('烏野') || fileName.includes('karasuno')) {
+                            type = 'karasuno';
+                        } else if (fileName.includes('音駒') || fileName.includes('nekoma')) {
+                            type = 'nekoma';
+                        } else if (fileName.includes('青葉城西') || fileName.includes('aoba')) {
+                            type = 'aoba-johsai';
+                        } else if (fileName.includes('梟谷') || fileName.includes('fukurodani')) {
+                            type = 'fukurodani';
+                        } else if (fileName.includes('事件') || fileName.includes('event')) {
+                            type = 'event';
+                        } else if (fileName.includes('HVBP')) {
+                            type = 'hvbp';
+                        } else if (fileName.includes('HVPR')) {
+                            type = 'hvpr';
+                        } else {
+                            type = 'other';
+                        }
+                    }
+                    
+                    // 添加到卡片庫
+                    allCards.push({
+                        id: Date.now() + i,
+                        name: fileName,
+                        type: type,
+                        image: e.target.result
+                    });
+                    
+                    renderAllCards();
+                    showNotification(`已成功添加卡片: ${fileName}`, 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // 重置檔案輸入，允許上傳相同檔案
+            e.target.value = '';
+        }
+        
+        // 渲染所有卡片
+        function renderAllCards() {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            
+            let filteredCards = allCards;
+            
+            // 應用篩選
+            if (currentCardType !== 'all') {
+                filteredCards = allCards.filter(card => card.type === currentCardType);
+            }
+            
+            // 渲染卡片
+            if (filteredCards.length === 0) {
+                container.innerHTML = '<div class="empty-card-message" style="text-align:center; padding:40px; color:#888; grid-column:1/-1;">暫無卡片，請上傳卡片圖片</div>';
+                return;
+            }
+            
+            filteredCards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+                cardElement.dataset.id = card.id;
+                cardElement.draggable = true;
+                
+                // 設置拖拽數據
+                cardElement.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', card.id);
+                    this.classList.add('dragging');
+                });
+                
+                cardElement.addEventListener('dragend', function() {
+                    this.classList.remove('dragging');
+                });
+                
+                cardElement.innerHTML = `
+                    <button class="delete-btn" data-id="${card.id}">×</button>
+                    <div class="card-image">
+                        <img src="${card.image}" alt="${card.name}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">
+                    </div>
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-type">${getTypeText(card.type)}</div>
+                    <div class="card-actions">
+                        <button class="card-btn add-btn" data-id="${card.id}">+</button>
+                    </div>
+                `;
+                
+                // 點擊添加到牌組
+                cardElement.querySelector('.add-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    addToDeck(card);
+                });
+                
+                // 刪除卡片
+                cardElement.querySelector('.delete-btn').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteCard(card.id);
+                });
+                
+                container.appendChild(cardElement);
+            });
+        }
+        
+        // 刪除卡片
+        function deleteCard(cardId) {
+            if (confirm('確定要刪除此卡片嗎？')) {
+                // 從卡片庫中刪除
+                allCards = allCards.filter(card => card.id !== cardId);
+                
+                // 從牌組中刪除
+                currentDeck = currentDeck.filter(card => card.id !== cardId);
+                
+                // 更新UI
+                renderAllCards();
+                updateDeckDisplay();
+                
+                showNotification('卡片已刪除', 'success');
+            }
+        }
+        
+        // 添加到牌組
+        function addToDeck(card) {
+            // 檢查牌組是否已滿
+            if (currentDeck.length >= 40) {
+                showNotification('牌組已滿！最多只能添加40張卡片。', 'error');
+                return;
+            }
+            
+            // 檢查事件卡數量限制
+            if (card.type === 'event') {
+                const eventCardCount = currentDeck.filter(c => c.type === 'event').length;
+                if (eventCardCount >= 8) {
+                    showNotification('事件卡最多只能放8張！', 'warning');
+                    return;
+                }
+            }
+            
+            // 添加到牌組
+            currentDeck.push({...card});
+            
+            // 更新UI
+            updateDeckDisplay();
+            showNotification(`已添加卡片: ${card.name}`, 'success');
+        }
+        
+        // 從牌組中移除卡片
+        function removeFromDeck(cardId) {
+            const index = currentDeck.findIndex(card => card.id === cardId);
+            if (index !== -1) {
+                currentDeck.splice(index, 1);
+                updateDeckDisplay();
+            }
+        }
+        
+        // 更新牌組顯示
+        function updateDeckDisplay() {
+            const deckList = document.getElementById('deck-list');
+            const deckCount = document.getElementById('deck-count');
+            const totalCount = document.getElementById('total-count');
+            const eventCount = document.getElementById('event-count');
+            
+            // 計算事件卡數量
+            const eventCardCount = currentDeck.filter(card => card.type === 'event').length;
+            
+            // 更新計數
+            totalCount.textContent = currentDeck.length;
+            eventCount.textContent = eventCardCount;
+            deckCount.textContent = `${currentDeck.length}/40`;
+            
+            // 更新牌組列表
+            if (currentDeck.length === 0) {
+                deckList.innerHTML = '<div class="empty-deck">牌組目前是空的，請從左側添加卡片</div>';
+            } else {
+                deckList.innerHTML = '';
+                
+                // 按卡片ID分組
+                const groupedCards = {};
+                currentDeck.forEach(card => {
+                    if (!groupedCards[card.id]) {
+                        groupedCards[card.id] = {
+                            card: card,
+                            count: 1
+                        };
+                    } else {
+                        groupedCards[card.id].count++;
+                    }
+                });
+                
+                // 渲染牌組中的卡片
+                Object.values(groupedCards).forEach(item => {
+                    const deckCardElement = document.createElement('div');
+                    deckCardElement.className = 'deck-card';
+                    
+                    deckCardElement.innerHTML = `
+                        <div class="deck-card-image">
+                            <img src="${item.card.image}" alt="${item.card.name}" style="width:100%; height:100%; object-fit:cover; border-radius:6px;">
+                        </div>
+                        <div class="deck-card-name">${item.card.name}</div>
+                        <div class="deck-card-type">${getTypeText(item.card.type)}</div>
+                        <div class="deck-card-count">
+                            <button class="count-btn remove-btn" data-id="${item.card.id}">-</button>
+                            <span class="count-number">${item.count}</span>
+                            <button class="count-btn add-btn" data-id="${item.card.id}">+</button>
+                        </div>
+                    `;
+                    
+                    deckList.appendChild(deckCardElement);
+                });
+                
+                // 添加按鈕的事件監聽器
+                document.querySelectorAll('.deck-card .add-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const cardId = parseInt(this.dataset.id);
+                        const card = allCards.find(c => c.id === cardId);
+                        if (card) addToDeck(card);
+                    });
+                });
+                
+                document.querySelectorAll('.deck-card .remove-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        removeFromDeck(parseInt(this.dataset.id));
+                    });
+                });
+            }
+            
+            // 更新統計信息
+            updateDeckStats();
+        }
+        
+        // 更新牌組統計
+        function updateDeckStats() {
+            // 計算事件卡數量
+            const eventCount = currentDeck.filter(card => card.type === 'event').length;
+            
+            document.getElementById('stat-total').textContent = currentDeck.length;
+            document.getElementById('stat-event').textContent = eventCount;
+        }
+        
+        // 顯示通知
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification';
+            
+            if (type === 'warning') {
+                notification.classList.add('warning');
+            } else if (type === 'error') {
+                notification.classList.add('error');
+            }
+            
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 輔助函數：獲取類型文本
+        function getTypeText(type) {
+            const typeMap = {
+                'karasuno': '烏野高校',
+                'nekoma': '音駒高校',
+                'aoba-johsai': '青葉城西',
+                'fukurodani': '梟谷高校',
+                'other': '其他高校',
+                'event': '事件',
+                'hvbp': 'HVBP',
+                'hvpr': 'HVPR'
+            };
+            return typeMap[type] || type;
+        }
+    </script>
+</body>
+</html>
